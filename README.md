@@ -96,15 +96,17 @@ To integrate this server with a desktop app, add the following to your app's ser
 
 ## Features
 
-- Fetches web content using modern fetch API
+- Fetches web content using Impit library for browser impersonation and advanced HTTP features
 - Supports custom headers for requests
 - Provides content in multiple formats: HTML, JSON, plain text, and Markdown
 - Uses JSDOM for HTML parsing and text extraction
 - Uses TurndownService for HTML to Markdown conversion
+- Includes custom private IP blocking logic for security
 
 ## Development
 
 - Run `npm run dev` to start the TypeScript compiler in watch mode
+- After adding Impit, remember to install dependencies with `npm install`
 - Use `npm test` to run the test suite
 
 ## License
