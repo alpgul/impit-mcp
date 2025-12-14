@@ -1,15 +1,29 @@
 import { Fetcher } from "./Fetcher";
 import { JSDOM } from "jsdom";
 import TurndownService from "turndown";
-
-global.fetch = jest.fn();
+import { Impit } from "impit";
 
 jest.mock("jsdom");
-
 jest.mock("turndown");
+jest.mock("impit", () => {
+  const mockFetch = jest.fn();
+  
+  return {
+    Impit: jest.fn().mockImplementation(() => {
+      return {
+        fetch: mockFetch
+      };
+    }),
+    mockFetch // Export for test access
+  };
+});
+
+// TypeScript için mockFetch'e erişim
+const mockFetch = (require("impit") as any).mockFetch as jest.Mock;
 
 describe("Fetcher", () => {
   beforeEach(() => {
+    mockFetch.mockClear();
     jest.clearAllMocks();
   });
 
@@ -34,7 +48,7 @@ describe("Fetcher", () => {
 
   describe("html", () => {
     it("should return the raw HTML content", async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         text: jest.fn().mockResolvedValueOnce(mockHtml),
       });
@@ -47,7 +61,7 @@ describe("Fetcher", () => {
     });
 
     it("should handle errors", async () => {
-      (fetch as jest.Mock).mockRejectedValueOnce(new Error("Network error"));
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await Fetcher.html(mockRequest);
       expect(result).toEqual({
@@ -65,7 +79,7 @@ describe("Fetcher", () => {
   describe("json", () => {
     it("should parse and return JSON content", async () => {
       const mockJson = { key: "value" };
-      (fetch as jest.Mock).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         json: jest.fn().mockResolvedValueOnce(mockJson),
       });
@@ -78,7 +92,7 @@ describe("Fetcher", () => {
     });
 
     it("should handle errors", async () => {
-      (fetch as jest.Mock).mockRejectedValueOnce(new Error("Invalid JSON"));
+      mockFetch.mockRejectedValueOnce(new Error("Invalid JSON"));
 
       const result = await Fetcher.json(mockRequest);
       expect(result).toEqual({
@@ -95,7 +109,7 @@ describe("Fetcher", () => {
 
   describe("txt", () => {
     it("should return plain text content without HTML tags, scripts, and styles", async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         text: jest.fn().mockResolvedValueOnce(mockHtml),
       });
@@ -121,7 +135,7 @@ describe("Fetcher", () => {
     });
 
     it("should handle errors", async () => {
-      (fetch as jest.Mock).mockRejectedValueOnce(new Error("Parsing error"));
+      mockFetch.mockRejectedValueOnce(new Error("Parsing error"));
 
       const result = await Fetcher.txt(mockRequest);
       expect(result).toEqual({
@@ -138,7 +152,7 @@ describe("Fetcher", () => {
 
   describe("markdown", () => {
     it("should convert HTML to markdown", async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: true,
         text: jest.fn().mockResolvedValueOnce(mockHtml),
       });
@@ -156,7 +170,7 @@ describe("Fetcher", () => {
     });
 
     it("should handle errors", async () => {
-      (fetch as jest.Mock).mockRejectedValueOnce(new Error("Conversion error"));
+      mockFetch.mockRejectedValueOnce(new Error("Conversion error"));
 
       const result = await Fetcher.markdown(mockRequest);
       expect(result).toEqual({
@@ -173,7 +187,7 @@ describe("Fetcher", () => {
 
   describe("error handling", () => {
     it("should handle non-OK responses", async () => {
-      (fetch as jest.Mock).mockResolvedValueOnce({
+      mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
       });
@@ -191,7 +205,7 @@ describe("Fetcher", () => {
     });
 
     it("should handle unknown errors", async () => {
-      (fetch as jest.Mock).mockRejectedValueOnce("Unknown error");
+      mockFetch.mockRejectedValueOnce("Unknown error");
 
       const result = await Fetcher.html(mockRequest);
       expect(result).toEqual({

@@ -6,7 +6,9 @@
   "main": "index.js",
   "license": "MIT",
   "author": "zcaceres (@zachcaceres zach.dev)",
-  "contributors": ["pwilkin (ilintar@gmail.com)"],
+  "contributors": [
+    "pwilkin (ilintar@gmail.com)"
+  ],
   "scripts": {
     "build": "tsc && shx chmod +x dist/*.js",
     "prepare": "npm run build",
@@ -20,6 +22,7 @@
   "keywords": [],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
+    "impit": "^0.7.4",
     "jsdom": "^25.0.1",
     "private-ip": "^3.0.2",
     "turndown": "^7.2.0",
@@ -31,8 +34,8 @@
     "@types/node": "^22.10.2",
     "@types/turndown": "^5.0.5",
     "jest": "^29.7.0",
+    "shx": "0.4.0",
     "ts-jest": "^29.2.5",
-    "typescript": "^5.7.2",
-    "shx": "0.4.0"
+    "typescript": "^5.7.2"
   }
 }

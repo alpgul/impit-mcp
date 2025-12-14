@@ -1,9 +1,11 @@
 import { JSDOM } from "jsdom";
 import TurndownService from "turndown";
-import is_ip_private from "private-ip";
 import { RequestPayload } from "./types.js";
+import { Impit } from "impit";
 
 export class Fetcher {
+  private static impit = new Impit();
+
   private static applyLengthLimits(text: string, maxLength: number, startIndex: number): string {
     if (startIndex >= text.length) {
       return "";
@@ -12,17 +14,18 @@ export class Fetcher {
     const end = maxLength > 0 ? Math.min(startIndex + maxLength, text.length) : text.length;
     return text.substring(startIndex, end);
   }
+
   private static async _fetch({
     url,
     headers,
-  }: RequestPayload): Promise<Response> {
+  }: RequestPayload): Promise<any> {
     try {
-      if (is_ip_private(url)) {
+      if (this.isPrivateIP(url)) {
         throw new Error(
           `Fetcher blocked an attempt to fetch a private IP ${url}. This is to prevent a security vulnerability where a local MCP could fetch privileged local IPs and exfiltrate data.`,
         );
       }
-      const response = await fetch(url, {
+      const response = await this.impit.fetch(url, {
         headers: {
           "User-Agent":
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -61,6 +64,41 @@ export class Fetcher {
         content: [{ type: "text", text: (error as Error).message }],
         isError: true,
       };
+    }
+  }
+
+  private static isPrivateIP(url: string): boolean {
+    try {
+      const parsedUrl = new URL(url);
+      const hostname = parsedUrl.hostname;
+      
+      // Handle IPv6 addresses (remove brackets)
+      const host = hostname.startsWith('[') && hostname.endsWith(']')
+        ? hostname.slice(1, -1)
+        : hostname;
+      
+      // Check for localhost
+      if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+        return true;
+      }
+
+      // Check for IPv4 private ranges
+      const ipv4Pattern = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/;
+      const match = host.match(ipv4Pattern);
+      if (match) {
+        const [_, a, b, c] = match.map(Number);
+        // 10.0.0.0/8
+        if (a === 10) return true;
+        // 172.16.0.0/12
+        if (a === 172 && b >= 16 && b <= 31) return true;
+        // 192.168.0.0/16
+        if (a === 192 && b === 168) return true;
+      }
+
+      return false;
+    } catch (e) {
+      // If URL parsing fails, consider it not private
+      return false;
     }
   }
 
