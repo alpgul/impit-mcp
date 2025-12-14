@@ -28,14 +28,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
       {
-        name: "fetch_html",
+        name: "impit_fetch_html",
         description: "Fetch a website and return its unmodified contents as HTML",
         inputSchema: {
           type: "object",
           properties: {
             url: {
               type: "string",
-              description: "URL of the website to fetch",
+              description: "URL of the website to impit",
             },
             headers: {
               type: "object",
@@ -54,14 +54,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "fetch_markdown",
-        description: "Fetch a website and return its contents converted content to Markdown",
+        name: "impit_fetch_markdown",
+        description: "Fetch a website and return its contents converted to Markdown",
         inputSchema: {
           type: "object",
           properties: {
             url: {
               type: "string",
-              description: "URL of the website to fetch",
+              description: "URL of the website to impit",
             },
             headers: {
               type: "object",
@@ -80,7 +80,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "fetch_txt",
+        name: "impit_fetch_txt",
         description:
           "Fetch a website, convert the content to plain text (no HTML)",
         inputSchema: {
@@ -88,7 +88,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           properties: {
             url: {
               type: "string",
-              description: "URL of the website to fetch",
+              description: "URL of the website to impit",
             },
             headers: {
               type: "object",
@@ -107,14 +107,14 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
-        name: "fetch_json",
+        name: "impit_fetch_json",
         description: "Fetch a JSON file from a URL",
         inputSchema: {
           type: "object",
           properties: {
             url: {
               type: "string",
-              description: "URL of the JSON to fetch",
+              description: "URL of the JSON to impit",
             },
             headers: {
               type: "object",
@@ -141,19 +141,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   const validatedArgs = RequestPayloadSchema.parse(args);
 
-  if (request.params.name === "fetch_html") {
+  if (request.params.name === "impit_fetch_html") {
     const fetchResult = await Fetcher.html(validatedArgs);
     return fetchResult;
   }
-  if (request.params.name === "fetch_json") {
+  if (request.params.name === "impit_fetch_json") {
     const fetchResult = await Fetcher.json(validatedArgs);
     return fetchResult;
   }
-  if (request.params.name === "fetch_txt") {
+  if (request.params.name === "impit_fetch_txt") {
     const fetchResult = await Fetcher.txt(validatedArgs);
     return fetchResult;
   }
-  if (request.params.name === "fetch_markdown") {
+  if (request.params.name === "impit_fetch_markdown") {
     const fetchResult = await Fetcher.markdown(validatedArgs);
     return fetchResult;
   }

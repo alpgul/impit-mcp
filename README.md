@@ -14,37 +14,37 @@ This MCP server provides functionality to fetch web content in various formats, 
 
 ### Tools
 
-- **fetch_html**
+- **impit_fetch_html**
   - Fetch a website and return the content as HTML
   - Input:
-    - `url` (string, required): URL of the website to fetch
+    - `url` (string, required): URL of the website to impit
     - `headers` (object, optional): Custom headers to include in the request
     - `max_length` (number, optional): Maximum length to fetch (default 5000, can change via environment variable)
     - `start_index` (number, optional): Used together with max_length to retrieve contents piece by piece, 0 by default
   - Returns the raw HTML content of the webpage
 
-- **fetch_json**
+- **impit_fetch_json**
   - Fetch a JSON file from a URL
   - Input:
-    - `url` (string, required): URL of the JSON to fetch
+    - `url` (string, required): URL of the JSON to impit
     - `headers` (object, optional): Custom headers to include in the request
     - `max_length` (number, optional): Maximum length to fetch (default 5000, can change via environment variable)
     - `start_index` (number, optional): Used together with max_length to retrieve contents piece by piece, 0 by default
   - Returns the parsed JSON content
 
-- **fetch_txt**
+- **impit_fetch_txt**
   - Fetch a website and return the content as plain text (no HTML)
   - Input:
-    - `url` (string, required): URL of the website to fetch
+    - `url` (string, required): URL of the website to impit
     - `headers` (object, optional): Custom headers to include in the request
     - `max_length` (number, optional): Maximum length to fetch (default 5000, can change via environment variable)
     - `start_index` (number, optional): Used together with max_length to retrieve contents piece by piece, 0 by default
   - Returns the text content of the webpage with HTML tags, scripts, and styles removed
 
-- **fetch_markdown**
+- **impit_fetch_markdown**
   - Fetch a website and return the content as Markdown
   - Input:
-    - `url` (string, required): URL of the website to fetch
+    - `url` (string, required): URL of the website to impit
     - `headers` (object, optional): Custom headers to include in the request
     - `max_length` (number, optional): Maximum length to fetch (default 5000, can change via environment variable)
     - `start_index` (number, optional): Used together with max_length to retrieve contents piece by piece, 0 by default
@@ -76,18 +76,30 @@ This will start the Fetch MCP Server running on stdio.
 
 ### Usage with Desktop App
 
-To integrate this server with a desktop app, add the following to your app's server configuration:
-
+#### For Published Packages
 ```json
 {
   "mcpServers": {
     "fetch": {
       "command": "npx",
-      "args": [
-        "mcp-fetch-server"
-      ], 
+      "args": ["mcp-fetch-server"],
       "env": {
-        "DEFAULT_LIMIT": "50000" // optionally change default limit
+        "DEFAULT_LIMIT": "50000"
+      }
+    }
+  }
+}
+```
+
+#### For GitHub Forks
+```json
+{
+  "mcpServers": {
+    "fetch": {
+      "command": "npx",
+      "args": ["github:alpgul/impit-mcp"],
+      "env": {
+        "DEFAULT_LIMIT": "50000"
       }
     }
   }
