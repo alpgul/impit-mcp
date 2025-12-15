@@ -5,9 +5,17 @@ import { Impit } from "impit";
 import { HeaderGenerator } from "header-generator";
 
 export class Fetcher {
-  private static impit = new Impit({browser: 'chrome'});
+  private static impit = new Impit({ browser: "chrome" });
   private static headerGenerator = new HeaderGenerator({
-    browsers: ["chrome"],
+    browsers: [
+      {
+        name: "chrome",
+        minVersion: 125,
+        maxVersion: 125,
+      },
+    ],
+    devices: ["desktop"],
+    operatingSystems: ["windows"],
   });
 
   private static applyLengthLimits(
@@ -33,30 +41,27 @@ export class Fetcher {
           `Fetcher blocked an attempt to fetch a private IP ${url}. This is to prevent a security vulnerability where a local MCP could fetch privileged local IPs and exfiltrate data.`
         );
       }
-      const REAL_HEADERS_OVERRIDE: Record<string, string> = {
-        "sec-ch-ua": "\"Google Chrome\";v=\"125\", \"Chromium\";v=\"125\", \"Not.A/Brand\";v=\"24\"",
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": "\"Windows\"",
-        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
-      };
 
-      const realHeaders = { ...headers };
-
-      // Remove any existing headers that match case-insensitively
-      const headersToRemove = ["sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform", "user-agent"];
-      const lowerHeadersToRemove = headersToRemove.map(h => h.toLowerCase());
-
-      for (const key of Object.keys(realHeaders)) {
-        if (lowerHeadersToRemove.includes(key.toLowerCase())) {
-          delete realHeaders[key];
+      const fixedHeaders = new Map();
+      for (const entry of Object.entries(this.headerGenerator.getHeaders())) {
+        fixedHeaders.set(entry[0].toLowerCase(), entry);
+      }
+      const headersToRemove = [
+        "sec-ch-ua",
+        "sec-ch-ua-mobile",
+        "sec-ch-ua-platform",
+        "user-agent",
+      ];
+      const lowerHeadersToRemove = headersToRemove.map((h) => h.toLowerCase());
+      for (const entry of Object.entries(headers || {})) {
+        if (lowerHeadersToRemove.includes(entry[0].toLowerCase())) {
+          continue;
         }
+        fixedHeaders.set(entry[0].toLowerCase(), entry);
       }
 
-      // Add overrides
-      Object.assign(realHeaders, REAL_HEADERS_OVERRIDE);
-
       const response = await this.impit.fetch(url, {
-        headers: this.headerGenerator.orderHeaders(realHeaders),
+        headers: Object.fromEntries(fixedHeaders.values()),
       });
 
       if (!response.ok) {
