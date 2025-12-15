@@ -57,6 +57,9 @@ export class Fetcher {
         if (lowerHeadersToRemove.includes(entry[0].toLowerCase())) {
           continue;
         }
+        if(fixedHeaders.has(entry[0].toLowerCase())) {
+          fixedHeaders.delete(entry[0].toLowerCase());
+        }
         fixedHeaders.set(entry[0].toLowerCase(), entry);
       }
 
