@@ -2,35 +2,61 @@ import { JSDOM } from "jsdom";
 import TurndownService from "turndown";
 import { RequestPayload } from "./types.js";
 import { Impit } from "impit";
+import { HeaderGenerator } from "header-generator";
 
 export class Fetcher {
-  private static impit = new Impit();
+  private static impit = new Impit({browser: 'chrome'});
+  private static headerGenerator = new HeaderGenerator({
+    browsers: ["chrome"],
+  });
 
-  private static applyLengthLimits(text: string, maxLength: number, startIndex: number): string {
+  private static applyLengthLimits(
+    text: string,
+    maxLength: number,
+    startIndex: number
+  ): string {
     if (startIndex >= text.length) {
       return "";
     }
-    
-    const end = maxLength > 0 ? Math.min(startIndex + maxLength, text.length) : text.length;
+
+    const end =
+      maxLength > 0
+        ? Math.min(startIndex + maxLength, text.length)
+        : text.length;
     return text.substring(startIndex, end);
   }
 
-  private static async _fetch({
-    url,
-    headers,
-  }: RequestPayload): Promise<any> {
+  private static async _fetch({ url, headers }: RequestPayload): Promise<any> {
     try {
       if (this.isPrivateIP(url)) {
         throw new Error(
-          `Fetcher blocked an attempt to fetch a private IP ${url}. This is to prevent a security vulnerability where a local MCP could fetch privileged local IPs and exfiltrate data.`,
+          `Fetcher blocked an attempt to fetch a private IP ${url}. This is to prevent a security vulnerability where a local MCP could fetch privileged local IPs and exfiltrate data.`
         );
       }
+      const REAL_HEADERS_OVERRIDE: Record<string, string> = {
+        "sec-ch-ua": "\"Google Chrome\";v=\"125\", \"Chromium\";v=\"125\", \"Not.A/Brand\";v=\"24\"",
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": "\"Windows\"",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+      };
+
+      const realHeaders = { ...headers };
+
+      // Remove any existing headers that match case-insensitively
+      const headersToRemove = ["sec-ch-ua", "sec-ch-ua-mobile", "sec-ch-ua-platform", "user-agent"];
+      const lowerHeadersToRemove = headersToRemove.map(h => h.toLowerCase());
+
+      for (const key of Object.keys(realHeaders)) {
+        if (lowerHeadersToRemove.includes(key.toLowerCase())) {
+          delete realHeaders[key];
+        }
+      }
+
+      // Add overrides
+      Object.assign(realHeaders, REAL_HEADERS_OVERRIDE);
+
       const response = await this.impit.fetch(url, {
-        headers: {
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          ...headers,
-        },
+        headers: this.headerGenerator.orderHeaders(realHeaders),
       });
 
       if (!response.ok) {
@@ -50,14 +76,14 @@ export class Fetcher {
     try {
       const response = await this._fetch(requestPayload);
       let html = await response.text();
-      
+
       // Apply length limits
       html = this.applyLengthLimits(
-        html, 
-        requestPayload.max_length ?? 5000, 
+        html,
+        requestPayload.max_length ?? 5000,
         requestPayload.start_index ?? 0
       );
-      
+
       return { content: [{ type: "text", text: html }], isError: false };
     } catch (error) {
       return {
@@ -71,14 +97,15 @@ export class Fetcher {
     try {
       const parsedUrl = new URL(url);
       const hostname = parsedUrl.hostname;
-      
+
       // Handle IPv6 addresses (remove brackets)
-      const host = hostname.startsWith('[') && hostname.endsWith(']')
-        ? hostname.slice(1, -1)
-        : hostname;
-      
+      const host =
+        hostname.startsWith("[") && hostname.endsWith("]")
+          ? hostname.slice(1, -1)
+          : hostname;
+
       // Check for localhost
-      if (host === 'localhost' || host === '127.0.0.1' || host === '::1') {
+      if (host === "localhost" || host === "127.0.0.1" || host === "::1") {
         return true;
       }
 
@@ -107,14 +134,14 @@ export class Fetcher {
       const response = await this._fetch(requestPayload);
       const json = await response.json();
       let jsonString = JSON.stringify(json);
-      
+
       // Apply length limits
       jsonString = this.applyLengthLimits(
         jsonString,
         requestPayload.max_length ?? 5000,
         requestPayload.start_index ?? 0
       );
-      
+
       return {
         content: [{ type: "text", text: jsonString }],
         isError: false,
@@ -142,7 +169,7 @@ export class Fetcher {
 
       const text = document.body.textContent || "";
       let normalizedText = text.replace(/\s+/g, " ").trim();
-      
+
       // Apply length limits
       normalizedText = this.applyLengthLimits(
         normalizedText,
@@ -168,14 +195,14 @@ export class Fetcher {
       const html = await response.text();
       const turndownService = new TurndownService();
       let markdown = turndownService.turndown(html);
-      
+
       // Apply length limits
       markdown = this.applyLengthLimits(
         markdown,
         requestPayload.max_length ?? 5000,
         requestPayload.start_index ?? 0
       );
-      
+
       return { content: [{ type: "text", text: markdown }], isError: false };
     } catch (error) {
       return {

@@ -22,6 +22,7 @@
   "keywords": [],
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.4",
+    "header-generator": "^2.1.78",
     "impit": "^0.7.4",
     "jsdom": "^25.0.1",
     "private-ip": "^3.0.2",
